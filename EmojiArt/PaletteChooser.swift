@@ -38,14 +38,22 @@ struct PaletteChooser: View {
     
     @ViewBuilder
     var contextMenu: some View {
+        AnimatedActionButton(title: "Edit", systemImage: "pencil") {
+            //            editing = true
+            paleteToEdit = store.palette(at: chosenPaletteIndex)
+        }
         AnimatedActionButton(title: "New", systemImage: "plus") {
             store.insertPalette(named: "New", emojis: "", at: chosenPaletteIndex)
+            //            editing = true
+            paleteToEdit = store.palette(at: chosenPaletteIndex)
         }
         AnimatedActionButton(title: "Delete", systemImage: "minus.circle") {
             chosenPaletteIndex = store.removePalette(at: chosenPaletteIndex)
         }
-        
-    goToMenu
+        AnimatedActionButton(title: "Manager", systemImage: "slider.vertical.3") {
+          managing = true
+        }
+        goToMenu
     }
     
     var goToMenu: some View {
@@ -53,7 +61,7 @@ struct PaletteChooser: View {
             ForEach(store.palettes) { palette in
                 AnimatedActionButton(title: palette.name) {
                     if let index = store.palettes.index(matching: palette) {
-                      chosenPaletteIndex = index
+                        chosenPaletteIndex = index
                     }
                 }
                 
@@ -71,8 +79,20 @@ struct PaletteChooser: View {
         }
         .id(palette.id)
         .transition(rollTransition)
-
+        //        .popover(isPresented: $editing) {
+        //            PaletteEditor(palette: $store.palettes[chosenPaletteIndex])
+        //        }
+        .popover(item: $paleteToEdit) { palette in
+            PaletteEditor(palette: $store.palettes[palette])
+        }
+        .sheet(isPresented: $managing) {
+            PaletteManager()
+        }
     }
+    
+    //    @State private var editing = false
+    @State private var paleteToEdit: Palette?
+    @State private var managing = false
     
     var rollTransition: AnyTransition {
         AnyTransition.asymmetric(insertion: .offset(x: 0, y: emojiFontSize),
